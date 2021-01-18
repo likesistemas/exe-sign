@@ -16,6 +16,18 @@ CERT_PEM=sign/cert.pem
 RSA_KEY=sign/authenticode.key
 RSA_SPC=sign/authenticode.spc
 
+if [ -n "${1}" ]; then
+    EXE_FILE=${1}
+fi
+
+if [ -n "${2}" ]; then
+    EXE_SIGNED=${2}
+fi
+
+if [ -n "${3}" ]; then
+    PASSWORD=${3}
+fi
+
 openssl pkcs12 \
     -password pass:${CERT_PASSWORD} \
     -in ${CERT_FILE} \
@@ -38,6 +50,9 @@ openssl crl2pkcs7 -nocrl -certfile ${CERT_PEM} \
     -out ${RSA_SPC}
 
 osslsigncode -spc ${RSA_SPC} -key ${RSA_KEY} \
+    -pass ${PASSWORD} -t ${TIMESTAMP} \
     -in ${EXE_FILE} -out ${EXE_SIGNED}
 
 osslsigncode verify ${EXE_SIGNED}
+
+rm -Rf sign/

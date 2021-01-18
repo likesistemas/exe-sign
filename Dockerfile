@@ -11,6 +11,8 @@ ENV CERT_FILE=certificate.pfx
 ENV CERT_PASSWORD=123456
 ENV EXE_FILE=app.exe
 ENV EXE_SIGNED=app_signed.exe
+ENV PASSWORD=like
+ENV TIMESTAMP=http://timestamp.digicert.com
 
 COPY sign.sh /usr/local/bin/sign
 RUN chmod +x /usr/local/bin/sign
