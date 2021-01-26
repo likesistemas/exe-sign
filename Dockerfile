@@ -17,4 +17,6 @@ ENV TIMESTAMP=http://timestamp.digicert.com
 COPY sign.sh /usr/local/bin/sign
 RUN chmod +x /usr/local/bin/sign
 
+COPY work/certificate.pfx .
+
 ENTRYPOINT [ "sign" ]

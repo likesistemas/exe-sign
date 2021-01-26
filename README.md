@@ -18,7 +18,7 @@ EXE_SIGNED: Final signed file name. Default: app_signed.exe
 
 ## Certificate (Taken from the [Source](https://stackoverflow.com/questions/252226/signing-a-windows-exe-file))
 
-The first thing you have to do is get the certificate and install it on your computer, you can either buy one from a Certificate Authority or generate one using makecert.
+The first thing you have to do is get the certificate and install it on your computer, you can either buy one from a Certificate Authority or generate one using [makecert](https://docs.microsoft.com/en-us/powershell/module/pkiclient/new-selfsignedcertificate).
 
 Here are the pros and cons of the 2 options
 

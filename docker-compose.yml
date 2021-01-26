@@ -7,5 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - CERT_PASSWORD=$CERT_PASSWORD
     volumes:
       - ./work/:/work/
