@@ -1,3 +1,4 @@
-work/
+work/*
+!work/certificate.pfx
 .env
 app.exe
