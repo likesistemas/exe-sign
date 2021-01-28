@@ -1,4 +1,17 @@
 #!/bin/bash
+
+if [ -n "${1}" ]; then
+    EXE_FILE=${1}
+fi
+
+if [ -n "${2}" ]; then
+    EXE_SIGNED=${2}
+fi
+
+if [ -n "${3}" ]; then
+    PASSWORD=${3}
+fi
+
 if [ ! -f ${CERT_FILE} ]; then
     echo "Certificate ${CERT_FILE} file not found"
     exit
@@ -15,18 +28,6 @@ KEY_PEM=sign/key.pem
 CERT_PEM=sign/cert.pem
 RSA_KEY=sign/authenticode.key
 RSA_SPC=sign/authenticode.spc
-
-if [ -n "${1}" ]; then
-    EXE_FILE=${1}
-fi
-
-if [ -n "${2}" ]; then
-    EXE_SIGNED=${2}
-fi
-
-if [ -n "${3}" ]; then
-    PASSWORD=${3}
-fi
 
 openssl pkcs12 \
     -password pass:${CERT_PASSWORD} \
