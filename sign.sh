@@ -14,12 +14,12 @@ fi
 
 if [ ! -f ${CERT_FILE} ]; then
     echo "Certificate ${CERT_FILE} file not found"
-    exit
+    exit 1
 fi
 
 if [ ! -f ${EXE_FILE} ]; then
     echo "Executable '${EXE_FILE}' not found"
-    exit
+    exit 1
 fi
 
 mkdir -p sign
