@@ -258,9 +258,9 @@ These errors usually occur when:
 
 ## Environment Variables
 
-CERT_FILE: Certificate file that should be in the /work/ folder. Default: certificate.pfx
+CERTIFICATE_BASE64: Your certificate (.pfx) encoded as BASE64 string. Required
 
-CERTIFICATE_PASSWORD: Certificate password. Default: 123456
+CERTIFICATE_PASSWORD: Certificate password. Required
 
 EXE_FILE: Executable to be signed. Default: app.exe
 

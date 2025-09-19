@@ -1,4 +1,4 @@
-FROM debian:13-slim as sign
+FROM debian:13-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -8,7 +8,7 @@ RUN apt-get update \
 WORKDIR /work/
 
 ENV CERTIFICATE_BASE64=""
-ENV CERTIFICATE_PASSWORD=123456
+ENV CERTIFICATE_PASSWORD=""
 ENV EXE_FILE=app.exe
 ENV EXE_SIGNED=app_signed.exe
 ENV PASSWORD=like
@@ -16,7 +16,5 @@ ENV TIMESTAMP=http://timestamp.digicert.com
 
 COPY sign.sh /usr/local/bin/sign
 RUN chmod +x /usr/local/bin/sign
-
-# Note: Certificate should be provided at runtime via volume mount or base64 decode
 
 ENTRYPOINT [ "sign" ]

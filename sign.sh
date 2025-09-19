@@ -4,14 +4,7 @@
 set -e
 
 # Color codes for terminal output
-RED='\0log_info "📜 Extracting certificate from PFX..."
-if ! openssl pkcs12 \
-    -password "pass:${CERTIFICATE_PASSWORD}" \
-    -in "${CERT_FILE}" \
-    -clcerts -nokeys \
-    -out "${CERT_PEM}" 2>/dev/null; then
-    error_exit "Failed to extract certificate from PFX"
-fi'
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
@@ -68,7 +61,7 @@ fi
 
 # Create temporary certificate file from BASE64
 CERT_FILE="/tmp/certificate.pfx"
-log_info "� Decoding certificate from BASE64..."
+log_info "🔓 Decoding certificate from BASE64..."
 if ! echo "${CERTIFICATE_BASE64}" | base64 -d > "${CERT_FILE}"; then
     error_exit "Failed to decode certificate from BASE64"
 fi
