@@ -171,6 +171,45 @@ docker pull likesistemas/exe-sign:pr-123  # Replace 123 with your PR number
 
 See [PR_WORKFLOWS.md](PR_WORKFLOWS.md) for detailed information about PR testing workflows.
 
+## Docker Hub Images
+
+This project automatically publishes Docker images to Docker Hub:
+
+### Available Tags
+
+- **`latest`**: Always points to the most recent release
+- **`v{version}`**: Specific version tags (e.g., `v1.0.0`)
+- **`{major}`**: Major version tags (e.g., `1`)
+- **`{major}.{minor}`**: Minor version tags (e.g., `1.0`)
+- **`pr-{number}`**: PR-specific tags for testing
+
+### Using Different Tags
+
+```bash
+# Latest stable version
+docker pull likesistemas/exe-sign:latest
+
+# Specific version
+docker pull likesistemas/exe-sign:v1.0.0
+
+# Major version (gets updates for patches and minor versions)
+docker pull likesistemas/exe-sign:1
+
+# PR testing
+docker pull likesistemas/exe-sign:pr-123
+```
+
+### Release Process
+
+When a new release is created:
+
+1. **Automatic Build**: Docker images are built for multiple platforms
+2. **Security Scan**: Trivy scans for vulnerabilities
+3. **Tag Management**: Multiple tags are created (`latest`, version-specific)
+4. **Release Notes**: Docker usage information is added automatically
+
+See [RELEASE.md](RELEASE.md) for detailed release instructions.
+
 ## Troubleshooting
 
 ### Error "Mac verify error: invalid password?"
@@ -183,7 +222,7 @@ This error indicates that the PFX certificate password is incorrect. To resolve:
 openssl pkcs12 -info -in work/certificate.pfx -password pass:YOUR_PASSWORD -noout
 ```
 
-2. Set the correct password in the `.env` file or in the `CERT_PASSWORD` environment variable
+1. Set the correct password in the `.env` file or in the `CERT_PASSWORD` environment variable
 
 ### Error "no start line" or "Failed to read private key"
 
@@ -211,11 +250,11 @@ Here are the pros and cons of the 2 options
 
 ### Buy a certificate
 
-#### Pros
+#### Commercial Certificate Pros
 
 Using a certificate issued by a CA(Certificate Authority) will ensure that Windows will not warn the end user about an application from an "unknown publisher" on any Computer using the certificate from the CA (OS normally comes with the root certificates from manny CA's)
 
-#### Cons
+#### Commercial Certificate Cons
 
 There is a cost involved on getting a certificate from a CA
 
@@ -223,11 +262,12 @@ For prices, see [Cheapssl](https://cheapsslsecurity.com/sslproducts/codesigningc
 
 ### Generate a certificate using Makecert
 
-#### Pros
+#### Makecert Pros
 
 The steps are easy and you can share the certificate with the end users
 
-#### Cons
+#### Makecert Cons
 
 End users will have to manually install the certificate on their machines and depending on your clients that might not be an option
+
 Certificates generated with makecert are normally used for development and testing, not production.
