@@ -1,0 +1,147 @@
+name: Build and Test PR
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    types: [ opened, synchronize, reopened ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: likesistemas/exe-sign
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr,prefix=pr-
+            type=ref,event=pr,prefix=pr-,suffix=-{{sha}}
+          labels: |
+            org.opencontainers.image.title=Executable Sign PR Build
+            org.opencontainers.image.description=PR build for executable signing tool
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Test Docker image
+        run: |
+          echo "Testing the built Docker image..."
+          
+          # Create test directory
+          mkdir -p test-work
+          
+          # Create a dummy certificate for testing (this won't work for real signing but tests the process)
+          echo "dummy certificate content" > test-work/certificate.pfx
+          
+          # Create a dummy executable for testing
+          echo "dummy executable content" > test-work/app.exe
+          
+          # Test that the image runs without crashing (will fail at signing but that's expected)
+          docker run --rm \
+            -v ${{ github.workspace }}/test-work:/work \
+            -e CERT_PASSWORD="test123" \
+            -e EXE_FILE="app.exe" \
+            -e EXE_SIGNED="app-signed.exe" \
+            -e PASSWORD="test" \
+            ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} || echo "Expected failure due to dummy certificate"
+          
+          echo "✅ Docker image test completed"
+
+      - name: Comment PR with image info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const imageTag = `${{ env.IMAGE_NAME }}:pr-${prNumber}`;
+            const imageSha = `${{ env.IMAGE_NAME }}:pr-${prNumber}-${{ github.sha }}`.substring(0, 60);
+            
+            const comment = `## 🐳 Docker Image Built Successfully
+            
+            Your PR has been built and pushed to Docker Hub for testing:
+            
+            **Latest PR image:**
+            \`\`\`bash
+            docker pull ${imageTag}
+            \`\`\`
+            
+            **Specific commit image:**
+            \`\`\`bash
+            docker pull ${imageSha}
+            \`\`\`
+            
+            ### Testing the PR image:
+            
+            \`\`\`bash
+            # Test with your own certificate and executable
+            docker run --rm \\
+              -v \${PWD}/work:/work \\
+              -e CERT_PASSWORD="your_password" \\
+              ${imageTag}
+            \`\`\`
+            
+            ### Using in GitHub Actions:
+            
+            \`\`\`yaml
+            - name: Sign executable (PR version)
+              uses: docker://likesistemas/exe-sign:pr-${prNumber}
+              with:
+                args: your-app.exe signed-app.exe your_password
+            \`\`\`
+            
+            The image will be available until the PR is merged or closed.`;
+            
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  security-scan:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

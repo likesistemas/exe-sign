@@ -149,6 +149,28 @@ To use GitHub Actions signing, you need to set up these repository secrets:
 3. Click "New repository secret"
 4. Add the required secrets listed above
 
+## Pull Request Testing
+
+When you open a pull request, an automated workflow will:
+
+- Build a Docker image for your PR
+- Push it to Docker Hub with tag `pr-{number}`
+- Run security scans and basic tests
+- Comment on the PR with testing instructions
+
+When the PR is closed or merged, another workflow will:
+
+- Automatically detect the PR closure
+- Comment with cleanup instructions for the Docker images
+- Provide direct links for manual image removal
+
+You can test PR changes using:
+```bash
+docker pull likesistemas/exe-sign:pr-123  # Replace 123 with your PR number
+```
+
+See [PR_WORKFLOWS.md](PR_WORKFLOWS.md) for detailed information about PR testing workflows.
+
 ## Troubleshooting
 
 ### Error "Mac verify error: invalid password?"
