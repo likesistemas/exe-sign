@@ -69,8 +69,8 @@ git push origin v1.2.3
 This release is available on Docker Hub:
 
 ```bash
-docker pull likesistemas/exe-sign:v1.2.3
-docker pull likesistemas/exe-sign:latest
+docker pull ricardoapaes/exe-sign:v1.2.3
+docker pull ricardoapaes/exe-sign:latest
 ```
 ### Step 3: Monitor the Release Build
 
@@ -111,8 +111,8 @@ The release workflow automatically adds Docker usage information to release note
 Pull this release:
 
 ```bash
-docker pull likesistemas/exe-sign:v1.2.3
-docker pull likesistemas/exe-sign:latest
+docker pull ricardoapaes/exe-sign:v1.2.3
+docker pull ricardoapaes/exe-sign:latest
 ```
 
 ### Available Tags
@@ -187,19 +187,19 @@ Once released, other repositories can use this action:
 ### Latest Version (Recommended)
 
 ```yaml
-uses: likesistemas/exe-sign@v1
+uses: ricardoapaes/exe-sign@v1
 ```
 
 ### Specific Version
 
 ```yaml
-uses: likesistemas/exe-sign@v1.0.0
+uses: ricardoapaes/exe-sign@v1.0.0
 ```
 
 ### Main Branch (Not Recommended for Production)
 
 ```yaml
-uses: likesistemas/exe-sign@main
+uses: ricardoapaes/exe-sign@main
 ```
 
 ## Best Practices

@@ -8,12 +8,12 @@ The easiest way to use this action is to reference it directly from other reposi
 
 ```yaml
 - name: Sign executable
-  uses: likesistemas/exe-sign@v1
+  uses: ricardoapaes/exe-sign@v1
   with:
     executable-path: 'dist/myapp.exe'
     signed-executable-name: 'myapp-signed.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 ```
 
 ## Setup
@@ -34,8 +34,8 @@ cat your-certificate.pfx | base64 -w 0
 
 Go to your repository settings and add these secrets:
 
-- **CERT_BASE64**: The Base64 encoded certificate from step 1
-- **CERT_PASSWORD**: The password for your certificate file
+- **CERTIFICATE_BASE64**: The Base64 encoded certificate from step 1
+- **CERTIFICATE_PASSWORD**: The password for your certificate file
 - **SIGNING_PASSWORD** (optional): Additional password for osslsigncode
 
 ### 3. Use in Your Workflow
@@ -48,8 +48,8 @@ Go to your repository settings and add these secrets:
   with:
     executable-path: 'path/to/your/app.exe'
     signed-executable-name: 'signed-app.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 ```
 
 #### Option B: Using the Reusable Workflow
@@ -62,8 +62,8 @@ jobs:
       executable-path: 'dist/myapp.exe'
       signed-executable-name: 'myapp-signed.exe'
     secrets:
-      CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
-      CERT_BASE64: ${{ secrets.CERT_BASE64 }}
+      CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+      CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
 ```
 
 ## Complete Example
@@ -129,8 +129,8 @@ To enable verbose logging, add this step before signing:
   with:
     executable-path: 'dist/YourApp.exe'
     signed-executable-name: 'YourApp-signed.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 ```
 
 ### With Electron Applications
@@ -144,8 +144,8 @@ To enable verbose logging, add this step before signing:
   with:
     executable-path: 'dist/win-unpacked/YourApp.exe'
     signed-executable-name: 'YourApp-signed.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 ```
 
 ### With Release Creation
@@ -156,8 +156,8 @@ To enable verbose logging, add this step before signing:
   uses: ./.github/actions/sign-executable
   with:
     executable-path: 'dist/app.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 
 - name: Create Release
   uses: actions/create-release@v1

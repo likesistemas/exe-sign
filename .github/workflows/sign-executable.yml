@@ -18,12 +18,12 @@ on:
         type: boolean
         default: true
     secrets:
-      CERT_PASSWORD:
-        description: 'Certificate password'
+      CERTIFICATE_PASSWORD:
         required: true
-      CERT_BASE64:
-        description: 'Base64 encoded certificate file'
+        description: 'Password for the certificate file'
+      CERTIFICATE_BASE64:
         required: true
+        description: 'Base64 encoded certificate file (.pfx)'
       SIGNING_PASSWORD:
         description: 'Additional signing password (optional)'
         required: false
@@ -38,10 +38,6 @@ jobs:
       - name: Create work directory
         run: mkdir -p work
 
-      - name: Decode certificate
-        run: |
-          echo "${{ secrets.CERT_BASE64 }}" | base64 -d > work/certificate.pfx
-
       - name: Copy executable to work directory
         run: |
           cp "${{ inputs.executable-path }}" work/app.exe
@@ -50,11 +46,12 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/work:/work \
-            -e CERT_PASSWORD="${{ secrets.CERT_PASSWORD }}" \
+            -e CERTIFICATE_BASE64="${{ secrets.CERTIFICATE_BASE64 }}" \
+            -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             -e EXE_FILE="app.exe" \
             -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
             -e PASSWORD="${{ secrets.SIGNING_PASSWORD || 'like' }}" \
-            likesistemas/exe-sign:latest
+            ricardoapaes/exe-sign:latest
 
       - name: Upload signed executable
         if: ${{ inputs.upload-artifact }}

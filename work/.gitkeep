@@ -1,0 +1,5 @@
+# Certificate and Executable Directory
+
+This directory is for certificate and executable files.
+
+Add your certificate.pfx file here (it will be ignored by git).

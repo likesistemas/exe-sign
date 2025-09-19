@@ -7,8 +7,8 @@ RUN apt-get update \
 
 WORKDIR /work/
 
-ENV CERT_FILE=certificate.pfx
-ENV CERT_PASSWORD=123456
+ENV CERTIFICATE_BASE64=""
+ENV CERTIFICATE_PASSWORD=123456
 ENV EXE_FILE=app.exe
 ENV EXE_SIGNED=app_signed.exe
 ENV PASSWORD=like
@@ -17,6 +17,6 @@ ENV TIMESTAMP=http://timestamp.digicert.com
 COPY sign.sh /usr/local/bin/sign
 RUN chmod +x /usr/local/bin/sign
 
-COPY work/certificate.pfx .
+# Note: Certificate should be provided at runtime via volume mount or base64 decode
 
 ENTRYPOINT [ "sign" ]
