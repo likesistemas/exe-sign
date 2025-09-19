@@ -25,6 +25,130 @@ Or using docker directly:
 docker run -v ${PWD}/work/:/work/ -e CERT_PASSWORD=your_password likesistemas/exe-sign:latest
 ```
 
+## GitHub Actions Usage
+
+This repository provides GitHub Actions for signing executables in CI/CD pipelines.
+
+### Using from Another Repository
+
+You can use this action directly from other repositories:
+
+```yaml
+- name: Sign executable
+  uses: likesistemas/exe-sign@v1
+  with:
+    executable-path: 'path/to/your/executable.exe'
+    signed-executable-name: 'signed-executable.exe'
+    certificate-base64: ${{ secrets.CERT_BASE64 }}
+    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    signing-password: ${{ secrets.SIGNING_PASSWORD }} # optional
+```
+
+### Complete Example for External Use
+
+```yaml
+name: Build and Sign Application
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  build-and-sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build your application
+        run: |
+          # Your build steps here
+          # This should produce an executable file
+
+      - name: Sign executable
+        id: sign
+        uses: likesistemas/exe-sign@v1
+        with:
+          executable-path: 'dist/myapp.exe'
+          signed-executable-name: 'myapp-signed.exe'
+          certificate-base64: ${{ secrets.CERT_BASE64 }}
+          certificate-password: ${{ secrets.CERT_PASSWORD }}
+
+      - name: Upload signed executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-executable
+          path: ${{ steps.sign.outputs.signed-executable-path }}
+```
+
+### Using the Local Composite Action
+
+```yaml
+- name: Sign executable
+  uses: ./.github/actions/sign-executable
+  with:
+    executable-path: 'path/to/your/executable.exe'
+    signed-executable-name: 'signed-executable.exe'
+    certificate-base64: ${{ secrets.CERT_BASE64 }}
+    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    signing-password: ${{ secrets.SIGNING_PASSWORD }} # optional
+```
+
+### Using the Reusable Workflow
+
+```yaml
+name: Build and Sign
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build your application
+        run: |
+          # Your build steps here
+          # This should produce an executable file
+  
+  sign:
+    needs: build
+    uses: ./.github/workflows/sign-executable.yml
+    with:
+      executable-path: 'dist/myapp.exe'
+      signed-executable-name: 'myapp-signed.exe'
+      upload-artifact: true
+    secrets:
+      CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+      CERT_BASE64: ${{ secrets.CERT_BASE64 }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+```
+
+### Required Secrets
+
+To use GitHub Actions signing, you need to set up these repository secrets:
+
+1. **CERT_BASE64**: Your certificate file (.pfx) encoded in Base64
+   ```bash
+   # Convert your certificate to Base64
+   cat certificate.pfx | base64 -w 0
+   ```
+
+2. **CERT_PASSWORD**: Password for your certificate file
+
+3. **SIGNING_PASSWORD** (optional): Additional password for osslsigncode (defaults to 'like')
+
+### Setting up Secrets
+
+1. Go to your repository settings
+2. Navigate to "Secrets and variables" → "Actions"
+3. Click "New repository secret"
+4. Add the required secrets listed above
+
 ## Troubleshooting
 
 ### Error "Mac verify error: invalid password?"

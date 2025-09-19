@@ -1,0 +1,96 @@
+name: Example - Build and Sign Executable
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: false
+        default: 'latest'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      executable-path: ${{ steps.build.outputs.exe-path }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (example)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # This is just an example - replace with your actual build process
+      - name: Build application
+        id: build
+        run: |
+          echo "This is where you would build your application"
+          echo "For example, for a .NET app:"
+          echo "dotnet publish -c Release -o dist/"
+          echo "exe-path=dist/YourApp.exe" >> $env:GITHUB_OUTPUT
+          
+          # Create a dummy executable for demonstration
+          mkdir -p dist
+          echo "Dummy executable content" > dist/YourApp.exe
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-executable
+          path: dist/YourApp.exe
+
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: unsigned-executable
+          path: ./dist
+
+      - name: Sign executable
+        uses: ./.github/actions/sign-executable
+        with:
+          executable-path: 'dist/YourApp.exe'
+          signed-executable-name: 'YourApp-signed.exe'
+          certificate-base64: ${{ secrets.CERT_BASE64 }}
+          certificate-password: ${{ secrets.CERT_PASSWORD }}
+          signing-password: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Upload signed executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-executable
+          path: signing-work/YourApp-signed.exe
+          retention-days: 30
+
+  test-signed:
+    needs: sign
+    runs-on: windows-latest
+    steps:
+      - name: Download signed executable
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-executable
+          path: ./signed
+
+      - name: Verify signature (Windows)
+        shell: powershell
+        run: |
+          # Verify the digital signature on Windows
+          $signature = Get-AuthenticodeSignature -FilePath "signed/YourApp-signed.exe"
+          Write-Output "Signature Status: $($signature.Status)"
+          Write-Output "Signer: $($signature.SignerCertificate.Subject)"
+          
+          if ($signature.Status -eq "Valid") {
+            Write-Output "✅ Executable is properly signed"
+          } else {
+            Write-Output "❌ Signature verification failed"
+            exit 1
+          }
