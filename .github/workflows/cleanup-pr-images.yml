@@ -40,13 +40,13 @@ jobs:
           echo "🧹 Cleaning up Docker images for PR #${PR_NUMBER}"
           echo ""
           echo "Images to be cleaned up:"
-          echo "- ricardoapaes/exe-sign:pr-${PR_NUMBER}"
-          echo "- ricardoapaes/exe-sign:pr-${PR_NUMBER}-*"
+          echo "- ricardopaes/exe-sign:pr-${PR_NUMBER}"
+          echo "- ricardopaes/exe-sign:pr-${PR_NUMBER}-*"
           echo ""
           
           # Try to get list of tags (this requires Docker Hub API token for full functionality)
           echo "To manually clean up these images:"
-          echo "1. Go to https://hub.docker.com/r/ricardoapaes/exe-sign/tags"
+          echo "1. Go to https://hub.docker.com/r/ricardopaes/exe-sign/tags"
           echo "2. Search for 'pr-${PR_NUMBER}'"
           echo "3. Delete all matching tags"
 
@@ -62,8 +62,8 @@ jobs:
             
             This PR has been **${status}**. The following Docker images are scheduled for cleanup:
             
-            - \`ricardoapaes/exe-sign:pr-${prNumber}\`
-            - \`ricardoapaes/exe-sign:pr-${prNumber}-*\`
+            - \`ricardopaes/exe-sign:pr-${prNumber}\`
+            - \`ricardopaes/exe-sign:pr-${prNumber}-*\`
             
             ${merged ? 
               '✅ **PR was merged** - Changes are now available in the main image.' : 
@@ -71,7 +71,7 @@ jobs:
             }
             
             ### Manual cleanup steps:
-            1. Visit [Docker Hub Tags](https://hub.docker.com/r/ricardoapaes/exe-sign/tags)
+            1. Visit [Docker Hub Tags](https://hub.docker.com/r/ricardopaes/exe-sign/tags)
             2. Search for \`pr-${prNumber}\`
             3. Delete all matching tags
             
@@ -105,8 +105,8 @@ jobs:
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
             echo "🧹 Cleaning up Docker images for specific PR #${PR_NUMBER}"
             echo "Images to cleanup:"
-            echo "- ricardoapaes/exe-sign:pr-${PR_NUMBER}"
-            echo "- ricardoapaes/exe-sign:pr-${PR_NUMBER}-*"
+            echo "- ricardopaes/exe-sign:pr-${PR_NUMBER}"
+            echo "- ricardopaes/exe-sign:pr-${PR_NUMBER}-*"
           else
             # Bulk cleanup of old PRs
             echo "🧹 Performing bulk cleanup of old PR images..."

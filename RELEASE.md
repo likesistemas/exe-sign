@@ -69,9 +69,10 @@ git push origin v1.2.3
 This release is available on Docker Hub:
 
 ```bash
-docker pull ricardoapaes/exe-sign:v1.2.3
-docker pull ricardoapaes/exe-sign:latest
+docker pull ricardopaes/exe-sign:v1.2.3
+docker pull ricardopaes/exe-sign:latest
 ```
+
 ### Step 3: Monitor the Release Build
 
 1. After creating the release, monitor the [Actions tab](../../actions)
@@ -111,8 +112,8 @@ The release workflow automatically adds Docker usage information to release note
 Pull this release:
 
 ```bash
-docker pull ricardoapaes/exe-sign:v1.2.3
-docker pull ricardoapaes/exe-sign:latest
+docker pull ricardopaes/exe-sign:v1.2.3
+docker pull ricardopaes/exe-sign:latest
 ```
 
 ### Available Tags
@@ -121,7 +122,6 @@ docker pull ricardoapaes/exe-sign:latest
 - `v1.2.3` - This specific version
 - `1` - Latest v1.x.x release
 - `1.2` - Latest v1.2.x release
-```
 
 ## Troubleshooting Releases
 

@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ricardoapaes/exe-sign
+  IMAGE_NAME: ricardopaes/exe-sign
 
 jobs:
   build-and-test:
@@ -174,7 +174,7 @@ jobs:
             
             \`\`\`yaml
             - name: Sign executable (PR version)
-              uses: docker://ricardoapaes/exe-sign:pr-${prNumber}
+              uses: docker://ricardopaes/exe-sign:pr-${prNumber}
               with:
                 args: your-app.exe signed-app.exe your_password
             \`\`\`

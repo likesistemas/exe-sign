@@ -32,7 +32,7 @@ docker-compose run sign-exe
 Or using docker directly:
 
 ```bash
-docker run -v ${PWD}/work/:/work/ -e CERTIFICATE_BASE64="$(cat certificate.pfx | base64 -w 0)" -e CERTIFICATE_PASSWORD=your_password ricardoapaes/exe-sign:latest
+docker run -v ${PWD}/work/:/work/ -e CERTIFICATE_BASE64="$(cat certificate.pfx | base64 -w 0)" -e CERTIFICATE_PASSWORD=your_password ricardopaes/exe-sign:latest
 ```
 
 ## GitHub Actions Usage
@@ -190,7 +190,7 @@ When the PR is closed or merged, another workflow will:
 
 You can test PR changes using:
 ```bash
-docker pull ricardoapaes/exe-sign:pr-123  # Replace 123 with your PR number
+docker pull ricardopaes/exe-sign:pr-123  # Replace 123 with your PR number
 ```
 
 See [PR_WORKFLOWS.md](PR_WORKFLOWS.md) for detailed information about PR testing workflows.
@@ -211,16 +211,16 @@ This project automatically publishes Docker images to Docker Hub:
 
 ```bash
 # Latest stable version
-docker pull ricardoapaes/exe-sign:latest
+docker pull ricardopaes/exe-sign:latest
 
 # Specific version
-docker pull ricardoapaes/exe-sign:v1.0.0
+docker pull ricardopaes/exe-sign:v1.0.0
 
 # Major version (gets updates for patches and minor versions)
-docker pull ricardoapaes/exe-sign:1
+docker pull ricardopaes/exe-sign:1
 
 # PR testing
-docker pull ricardoapaes/exe-sign:pr-123
+docker pull ricardopaes/exe-sign:pr-123
 ```
 
 ### Release Process

@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ricardoapaes/exe-sign
+  IMAGE_NAME: ricardopaes/exe-sign
 
 jobs:
   build-tag:
