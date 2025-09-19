@@ -108,13 +108,13 @@ jobs:
             echo "📊 Original size: $original_size bytes"
             echo "📊 Signed size: $signed_size bytes"
             
-            # Verify the signature (basic check)
+            # Verify the signature (informational only - may fail with test certificates)
             echo "🔍 Verifying signature..."
             docker run --rm \
               -v ${{ github.workspace }}/test-work:/work \
               --entrypoint="" \
               ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} \
-              osslsigncode verify -in /work/7za-signed.exe || echo "Note: Signature verification may fail due to test certificate"
+              osslsigncode verify -in /work/7za-signed.exe && echo "✅ Signature verification passed" || echo "⚠️  Signature verification failed (expected with test certificates)"
               
           else
             echo "❌ Signed executable was not created"
