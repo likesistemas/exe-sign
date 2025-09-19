@@ -59,8 +59,8 @@ jobs:
         with:
           executable-path: 'dist/YourApp.exe'
           signed-executable-name: 'YourApp-signed.exe'
-          certificate-base64: ${{ secrets.CERT_BASE64 }}
-          certificate-password: ${{ secrets.CERT_PASSWORD }}
+          certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
           signing-password: ${{ secrets.SIGNING_PASSWORD }}
 
       - name: Upload signed executable

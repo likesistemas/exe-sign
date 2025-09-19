@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: likesistemas/exe-sign
+  IMAGE_NAME: ricardopaes/exe-sign
 
 jobs:
   build-and-test:
@@ -59,9 +59,8 @@ jobs:
         run: |
           echo "Testing the built Docker image with real executable and certificate..."
           
-          # Copy the real certificate from work directory
+          # Create test directory 
           mkdir -p test-work
-          cp work/certificate.pfx test-work/
           
           # Download a simple Windows executable for testing (7zip command line)
           echo "📥 Downloading test executable..."
@@ -81,16 +80,18 @@ jobs:
           echo "🔐 Testing certificate..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
-            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            -e CERTIFICATE_BASE64="${{ secrets.CERTIFICATE_BASE64 }}" \
+            -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             --entrypoint="" \
             ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} \
-            openssl pkcs12 -info -in /work/certificate.pfx -password "pass:${{ secrets.CERTIFICATE_PASSWORD }}" -noout
+            sh -c 'echo "$CERTIFICATE_BASE64" | base64 -d > /tmp/cert.pfx && openssl pkcs12 -info -in /tmp/cert.pfx -password "pass:$CERTIFICATE_PASSWORD" -noout'
           
           # Run the actual signing process
           echo "✍️  Signing executable..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
-            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            -e CERTIFICATE_BASE64="${{ secrets.CERTIFICATE_BASE64 }}" \
+            -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             -e EXE_FILE="7za.exe" \
             -e EXE_SIGNED="7za-signed.exe" \
             ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }}
@@ -159,12 +160,13 @@ jobs:
             # You can test with your own certificate and executable:
             docker run --rm \\
               -v \${PWD}/work:/work \\
-              -e CERT_PASSWORD="your_password" \\
+              -e CERTIFICATE_BASE64="..." \\
+              -e CERTIFICATE_PASSWORD="your_password" \\
               ${imageTag}
             \`\`\`
             
             **Note:** This PR image was automatically tested by:
-            - Validating the certificate in \`work/certificate.pfx\`
+            - Validating the certificate from \`CERTIFICATE_BASE64\` secret
             - Downloading and signing a real Windows executable (7zr.exe)
             - Verifying the signature was applied successfully
             
@@ -172,7 +174,7 @@ jobs:
             
             \`\`\`yaml
             - name: Sign executable (PR version)
-              uses: docker://likesistemas/exe-sign:pr-${prNumber}
+              uses: docker://ricardopaes/exe-sign:pr-${prNumber}
               with:
                 args: your-app.exe signed-app.exe your_password
             \`\`\`

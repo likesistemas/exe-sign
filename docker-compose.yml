@@ -3,12 +3,13 @@ version: "3"
 services:
 
   sign-exe:
-    image: likesistemas/exe-sign:latest
+    image: ricardoapaes/exe-sign:latest
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      - CERT_PASSWORD=${CERT_PASSWORD:-123456}
+      - CERTIFICATE_BASE64=${CERTIFICATE_BASE64}
+      - CERTIFICATE_PASSWORD=${CERTIFICATE_PASSWORD:-123456}
       - EXE_FILE=${EXE_FILE:-app.exe}
       - EXE_SIGNED=${EXE_SIGNED:-app_signed.exe}
       - PASSWORD=${PASSWORD:-like}

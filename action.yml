@@ -1,6 +1,6 @@
 name: 'Sign Windows Executable'
 description: 'Signs Windows executables using osslsigncode and a code signing certificate'
-author: 'likesistemas'
+author: 'ricardoapaes'
 branding:
   icon: 'shield'
   color: 'blue'
@@ -68,12 +68,13 @@ runs:
         echo "🔐 Starting signing process..."
         docker run --rm \
           -v ${{ github.workspace }}/signing-work:/work \
-          -e CERT_PASSWORD="${{ inputs.certificate-password }}" \
+          -e CERTIFICATE_BASE64="${{ inputs.certificate-base64 }}" \
+          -e CERTIFICATE_PASSWORD="${{ inputs.certificate-password }}" \
           -e EXE_FILE="app.exe" \
           -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
           -e PASSWORD="${{ inputs.signing-password }}" \
           -e TIMESTAMP="${{ inputs.timestamp-url }}" \
-          likesistemas/exe-sign:latest
+          ricardoapaes/exe-sign:latest
         
         # Set output
         echo "signed-path=${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}" >> $GITHUB_OUTPUT

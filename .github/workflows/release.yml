@@ -85,7 +85,7 @@ jobs:
           echo "🔐 Testing certificate..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
-            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             --entrypoint="" \
             ${{ env.IMAGE_NAME }}:latest \
             openssl pkcs12 -info -in /work/certificate.pfx -password "pass:${{ secrets.CERTIFICATE_PASSWORD }}" -noout
@@ -94,7 +94,7 @@ jobs:
           echo "✍️  Testing signing process..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
-            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             -e EXE_FILE="7za.exe" \
             -e EXE_SIGNED="7za-signed.exe" \
             ${{ env.IMAGE_NAME }}:latest
@@ -162,13 +162,13 @@ jobs:
             # Using latest
             docker run --rm \\
               -v \${PWD}/work:/work \\
-              -e CERT_PASSWORD="your_password" \\
+              -e CERTIFICATE_PASSWORD="your_password" \\
               ${{ env.IMAGE_NAME }}:latest
             
             # Using specific version
             docker run --rm \\
               -v \${PWD}/work:/work \\
-              -e CERT_PASSWORD="your_password" \\
+              -e CERTIFICATE_PASSWORD="your_password" \\
               ${{ env.IMAGE_NAME }}:${tagName}
             \`\`\`
             
@@ -179,8 +179,8 @@ jobs:
               uses: likesistemas/exe-sign@${tagName}
               with:
                 executable-path: 'dist/app.exe'
-                certificate-base64: \${{ secrets.CERT_BASE64 }}
-                certificate-password: \${{ secrets.CERT_PASSWORD }}
+                certificate-base64: \${{ secrets.CERTIFICATE_BASE64 }}
+                certificate-password: \${{ secrets.CERTIFICATE_PASSWORD }}
             \`\`\`
             `;
             

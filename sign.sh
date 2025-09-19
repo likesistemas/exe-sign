@@ -49,13 +49,30 @@ if [ -n "${3}" ]; then
 fi
 
 log_info "🚀 Starting executable signing process..."
-log "📂 Certificate file: ${CERT_FILE}"
+
+# Check if certificate is provided as BASE64
+if [ -z "${CERTIFICATE_BASE64}" ]; then
+    error_exit "CERTIFICATE_BASE64 environment variable is required"
+fi
+
+if [ -z "${CERTIFICATE_PASSWORD}" ]; then
+    error_exit "CERTIFICATE_PASSWORD environment variable is required"
+fi
+
+# Create temporary certificate file from BASE64
+CERT_FILE="/tmp/certificate.pfx"
+log_info "🔓 Decoding certificate from BASE64..."
+if ! echo "${CERTIFICATE_BASE64}" | base64 -d > "${CERT_FILE}"; then
+    error_exit "Failed to decode certificate from BASE64"
+fi
+
+# Verify the certificate file was created successfully
+if [ ! -f "${CERT_FILE}" ] || [ ! -s "${CERT_FILE}" ]; then
+    error_exit "Certificate file was not created properly from BASE64"
+fi
+
 log "🎯 Executable file: ${EXE_FILE}"
 log "📝 Output file: ${EXE_SIGNED}"
-
-if [ ! -f "${CERT_FILE}" ]; then
-    error_exit "Certificate file '${CERT_FILE}' not found"
-fi
 
 if [ ! -f "${EXE_FILE}" ]; then
     error_exit "Executable file '${EXE_FILE}' not found"
@@ -63,7 +80,7 @@ fi
 
 # Validate certificate password by testing the PFX file
 log_info "🔐 Validating certificate file and password..."
-if ! openssl pkcs12 -info -in "${CERT_FILE}" -password "pass:${CERT_PASSWORD}" -noout 2>/dev/null; then
+if ! openssl pkcs12 -info -in "${CERT_FILE}" -password "pass:${CERTIFICATE_PASSWORD}" -noout 2>/dev/null; then
     error_exit "Invalid certificate file or incorrect password for ${CERT_FILE}"
 fi
 log_success "Certificate validation successful"
@@ -77,7 +94,7 @@ RSA_SPC=sign/authenticode.spc
 
 log_info "🔑 Extracting private key from certificate..."
 if ! openssl pkcs12 \
-    -password "pass:${CERT_PASSWORD}" \
+    -password "pass:${CERTIFICATE_PASSWORD}" \
     -in "${CERT_FILE}" \
     -nocerts -nodes \
     -out "${KEY_PEM}" 2>/dev/null; then
@@ -86,7 +103,7 @@ fi
 
 log_info "📜 Extracting certificate from PFX..."
 if ! openssl pkcs12 \
-    -password "pass:${CERT_PASSWORD}" \
+    -password "pass:${CERTIFICATE_PASSWORD}" \
     -in "${CERT_FILE}" \
     -nokeys -nodes \
     -out "${CERT_PEM}" 2>/dev/null; then
@@ -143,5 +160,7 @@ fi
 
 log_info "🧹 Cleaning up temporary files..."
 rm -Rf sign/
+# Clean up temporary certificate file
+rm -f "${CERT_FILE}"
 
 log_success "🎉 Executable signing completed successfully!"

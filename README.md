@@ -4,14 +4,24 @@ Docker image to sign an executable using osslsigncode.
 
 ## Quick Start
 
+### Prerequisites
+
+1. **Certificate**: You need a code signing certificate (.pfx file)
+   - For production: Purchase from a Certificate Authority (CA)
+   - For testing: Generate a self-signed certificate
+   - See [📋 CERTIFICATE.md](CERTIFICATE.md) for detailed setup guide
+2. **Password**: Password for your certificate
+
+### Setup
+
 1. Copy the `.env.example` file to `.env` and configure your certificate password:
 
 ```bash
 cp .env.example .env
-# Edit the .env file and set CERT_PASSWORD with the correct password
+# Edit the .env file and set CERTIFICATE_PASSWORD with the correct password
 ```
 
-2. Place your PFX certificate and executable file in the `work/` folder
+2. Place your PFX certificate in the `work/` folder and name it `certificate.pfx`
 
 3. Run using docker-compose:
 
@@ -22,7 +32,7 @@ docker-compose run sign-exe
 Or using docker directly:
 
 ```bash
-docker run -v ${PWD}/work/:/work/ -e CERT_PASSWORD=your_password likesistemas/exe-sign:latest
+docker run -v ${PWD}/work/:/work/ -e CERTIFICATE_BASE64="$(cat certificate.pfx | base64 -w 0)" -e CERTIFICATE_PASSWORD=your_password ricardopaes/exe-sign:latest
 ```
 
 ## GitHub Actions Usage
@@ -35,12 +45,12 @@ You can use this action directly from other repositories:
 
 ```yaml
 - name: Sign executable
-  uses: likesistemas/exe-sign@v1
+  uses: ricardoapaes/exe-sign@v1
   with:
     executable-path: 'path/to/your/executable.exe'
     signed-executable-name: 'signed-executable.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
     signing-password: ${{ secrets.SIGNING_PASSWORD }} # optional
 ```
 
@@ -69,12 +79,12 @@ jobs:
 
       - name: Sign executable
         id: sign
-        uses: likesistemas/exe-sign@v1
+        uses: ricardoapaes/exe-sign@v1
         with:
           executable-path: 'dist/myapp.exe'
           signed-executable-name: 'myapp-signed.exe'
-          certificate-base64: ${{ secrets.CERT_BASE64 }}
-          certificate-password: ${{ secrets.CERT_PASSWORD }}
+          certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
 
       - name: Upload signed executable
         uses: actions/upload-artifact@v4
@@ -91,8 +101,8 @@ jobs:
   with:
     executable-path: 'path/to/your/executable.exe'
     signed-executable-name: 'signed-executable.exe'
-    certificate-base64: ${{ secrets.CERT_BASE64 }}
-    certificate-password: ${{ secrets.CERT_PASSWORD }}
+    certificate-base64: ${{ secrets.CERTIFICATE_BASE64 }}
+    certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
     signing-password: ${{ secrets.SIGNING_PASSWORD }} # optional
 ```
 
@@ -123,22 +133,34 @@ jobs:
       signed-executable-name: 'myapp-signed.exe'
       upload-artifact: true
     secrets:
-      CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
-      CERT_BASE64: ${{ secrets.CERT_BASE64 }}
+      CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+      CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 ```
 
-### Required Secrets
+### Setting up Secrets for GitHub Actions
 
-To use GitHub Actions signing, you need to set up these repository secrets:
+To use this action in other repositories, you need to configure these secrets:
 
-1. **CERT_BASE64**: Your certificate file (.pfx) encoded in Base64
+1. **CERTIFICATE_BASE64**: Your certificate file (.pfx) encoded in Base64
+
    ```bash
-   # Convert your certificate to Base64
+   # Linux/macOS
    cat certificate.pfx | base64 -w 0
+   
+   # Windows PowerShell  
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("certificate.pfx"))
    ```
 
-2. **CERT_PASSWORD**: Password for your certificate file
+   ```bash
+   # Linux/macOS
+   cat your-certificate.pfx | base64 -w 0
+   
+   # Windows PowerShell
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("your-certificate.pfx"))
+   ```
+
+2. **CERTIFICATE_PASSWORD**: Password for your certificate file
 
 3. **SIGNING_PASSWORD** (optional): Additional password for osslsigncode (defaults to 'like')
 
@@ -148,6 +170,8 @@ To use GitHub Actions signing, you need to set up these repository secrets:
 2. Navigate to "Secrets and variables" → "Actions"
 3. Click "New repository secret"
 4. Add the required secrets listed above
+
+**⚠️ Security Note**: The certificate and passwords are stored securely as GitHub Secrets and are never exposed in logs or code.
 
 ## Pull Request Testing
 
@@ -166,7 +190,7 @@ When the PR is closed or merged, another workflow will:
 
 You can test PR changes using:
 ```bash
-docker pull likesistemas/exe-sign:pr-123  # Replace 123 with your PR number
+docker pull ricardopaes/exe-sign:pr-123  # Replace 123 with your PR number
 ```
 
 See [PR_WORKFLOWS.md](PR_WORKFLOWS.md) for detailed information about PR testing workflows.
@@ -187,16 +211,16 @@ This project automatically publishes Docker images to Docker Hub:
 
 ```bash
 # Latest stable version
-docker pull likesistemas/exe-sign:latest
+docker pull ricardopaes/exe-sign:latest
 
 # Specific version
-docker pull likesistemas/exe-sign:v1.0.0
+docker pull ricardopaes/exe-sign:v1.0.0
 
 # Major version (gets updates for patches and minor versions)
-docker pull likesistemas/exe-sign:1
+docker pull ricardopaes/exe-sign:1
 
 # PR testing
-docker pull likesistemas/exe-sign:pr-123
+docker pull ricardopaes/exe-sign:pr-123
 ```
 
 ### Release Process
@@ -222,7 +246,7 @@ This error indicates that the PFX certificate password is incorrect. To resolve:
 openssl pkcs12 -info -in work/certificate.pfx -password pass:YOUR_PASSWORD -noout
 ```
 
-1. Set the correct password in the `.env` file or in the `CERT_PASSWORD` environment variable
+1. Set the correct password in the `.env` file or in the `CERTIFICATE_PASSWORD` environment variable
 
 ### Error "no start line" or "Failed to read private key"
 
@@ -234,40 +258,29 @@ These errors usually occur when:
 
 ## Environment Variables
 
-CERT_FILE: Certificate file that should be in the /work/ folder. Default: certificate.pfx
+CERTIFICATE_BASE64: Your certificate (.pfx) encoded as BASE64 string. Required
 
-CERT_PASSWORD: Certificate password. Default: 123456
+CERTIFICATE_PASSWORD: Certificate password. Required
 
 EXE_FILE: Executable to be signed. Default: app.exe
 
 EXE_SIGNED: Final signed file name. Default: app_signed.exe
 
-## Certificate (Taken from the [Source](https://stackoverflow.com/questions/252226/signing-a-windows-exe-file))
+## 📋 Certificate Guide
 
-The first thing you have to do is get the certificate and install it on your computer, you can either buy one from a Certificate Authority or generate one using [makecert](https://docs.microsoft.com/en-us/powershell/module/pkiclient/new-selfsignedcertificate).
+For detailed information about obtaining and configuring code signing certificates, see our comprehensive [Certificate Setup Guide](CERTIFICATE.md).
 
-Here are the pros and cons of the 2 options
+The guide covers:
 
-### Buy a certificate
+- 🛒 Where to buy production certificates
+- 🔨 How to generate test certificates
+- 🔧 Local development setup
+- ☁️ GitHub Actions configuration
+- 🔒 Security best practices
+- 🚨 Troubleshooting common issues
 
-#### Commercial Certificate Pros
+Quick links:
 
-Using a certificate issued by a CA(Certificate Authority) will ensure that Windows will not warn the end user about an application from an "unknown publisher" on any Computer using the certificate from the CA (OS normally comes with the root certificates from manny CA's)
-
-#### Commercial Certificate Cons
-
-There is a cost involved on getting a certificate from a CA
-
-For prices, see [Cheapssl](https://cheapsslsecurity.com/sslproducts/codesigningcertificate.html) and [Digicert](https://www.digicert.com/code-signing/)
-
-### Generate a certificate using Makecert
-
-#### Makecert Pros
-
-The steps are easy and you can share the certificate with the end users
-
-#### Makecert Cons
-
-End users will have to manually install the certificate on their machines and depending on your clients that might not be an option
-
-Certificates generated with makecert are normally used for development and testing, not production.
+- **Need a certificate?** → [CERTIFICATE.md - Types of Certificates](CERTIFICATE.md#-types-of-certificates)
+- **Setup for development?** → [CERTIFICATE.md - File Setup](CERTIFICATE.md#-file-setup)
+- **Security questions?** → [CERTIFICATE.md - Security Best Practices](CERTIFICATE.md#-security-best-practices)

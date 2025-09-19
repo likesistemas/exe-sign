@@ -1,4 +1,13 @@
+# Work directory with certificates and executables
 work/*
-!work/certificate.pfx
+!work/.gitkeep
+
+# Environment file with passwords
 .env
-app.exe
+
+# Executable files
+*.exe
+*.pfx
+
+# Docker volumes
+volumes/
