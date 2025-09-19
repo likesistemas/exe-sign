@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: likesistemas/exe-sign
+  IMAGE_NAME: ricardopaes/exe-sign
 
 jobs:
   build-and-push:
@@ -64,9 +64,8 @@ jobs:
         run: |
           echo "Testing the release image with real executable and certificate..."
           
-          # Copy the real certificate from work directory
+          # Create test directory
           mkdir -p test-work
-          cp work/certificate.pfx test-work/
           
           # Download a simple Windows executable for testing (7zip command line)
           echo "📥 Downloading test executable..."
@@ -85,15 +84,17 @@ jobs:
           echo "🔐 Testing certificate..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
+            -e CERTIFICATE_BASE64="${{ secrets.CERTIFICATE_BASE64 }}" \
             -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             --entrypoint="" \
             ${{ env.IMAGE_NAME }}:latest \
-            openssl pkcs12 -info -in /work/certificate.pfx -password "pass:${{ secrets.CERTIFICATE_PASSWORD }}" -noout
+            sh -c 'echo "$CERTIFICATE_BASE64" | base64 -d | openssl pkcs12 -info -password "pass:$CERTIFICATE_PASSWORD" -noout'
           
           # Test that the latest image runs and signs successfully
           echo "✍️  Testing signing process..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
+            -e CERTIFICATE_BASE64="${{ secrets.CERTIFICATE_BASE64 }}" \
             -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             -e EXE_FILE="7za.exe" \
             -e EXE_SIGNED="7za-signed.exe" \
@@ -162,12 +163,14 @@ jobs:
             # Using latest
             docker run --rm \\
               -v \${PWD}/work:/work \\
+              -e CERTIFICATE_BASE64="your_base64_certificate" \\
               -e CERTIFICATE_PASSWORD="your_password" \\
               ${{ env.IMAGE_NAME }}:latest
             
             # Using specific version
             docker run --rm \\
               -v \${PWD}/work:/work \\
+              -e CERTIFICATE_BASE64="your_base64_certificate" \\
               -e CERTIFICATE_PASSWORD="your_password" \\
               ${{ env.IMAGE_NAME }}:${tagName}
             \`\`\`
@@ -176,7 +179,7 @@ jobs:
             
             \`\`\`yaml
             - name: Sign executable
-              uses: likesistemas/exe-sign@${tagName}
+              uses: ricardoapaes/exe-sign@${tagName}
               with:
                 executable-path: 'dist/app.exe'
                 certificate-base64: \${{ secrets.CERTIFICATE_BASE64 }}

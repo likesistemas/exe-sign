@@ -40,12 +40,6 @@ runs:
       shell: bash
       run: mkdir -p ${{ github.workspace }}/signing-work
 
-    - name: Decode certificate
-      shell: bash
-      run: |
-        echo "${{ inputs.certificate-base64 }}" | base64 -d > ${{ github.workspace }}/signing-work/certificate.pfx
-        echo "Certificate decoded successfully"
-
     - name: Verify executable exists
       shell: bash
       run: |
@@ -66,6 +60,18 @@ runs:
       shell: bash
       run: |
         echo "Starting signing process..."
+        
+        # Determine Docker image tag based on action version
+        if [ -n "$GITHUB_ACTION_REF" ]; then
+          # Use the same tag as the action version (e.g., v1.0.0)
+          DOCKER_TAG="$GITHUB_ACTION_REF"
+          echo "Using Docker image: ricardopaes/exe-sign:$DOCKER_TAG"
+        else
+          # Fallback to latest for local development
+          DOCKER_TAG="latest"
+          echo "Using Docker image: ricardopaes/exe-sign:$DOCKER_TAG (fallback)"
+        fi
+        
         docker run --rm \
           -v ${{ github.workspace }}/signing-work:/work \
           -e CERTIFICATE_BASE64="${{ inputs.certificate-base64 }}" \
@@ -74,7 +80,7 @@ runs:
           -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
           -e PASSWORD="${{ inputs.signing-password }}" \
           -e TIMESTAMP="${{ inputs.timestamp-url }}" \
-          ricardoapaes/exe-sign:latest
+          ricardopaes/exe-sign:$DOCKER_TAG
         
         # Set output
         echo "signed-path=${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}" >> $GITHUB_OUTPUT
@@ -89,10 +95,3 @@ runs:
         fi
         echo "Signed executable verified: ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}"
         ls -la ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}
-
-    - name: Cleanup certificate
-      shell: bash
-      if: always()
-      run: |
-        rm -f ${{ github.workspace }}/signing-work/certificate.pfx
-        echo "Certificate file cleaned up"
