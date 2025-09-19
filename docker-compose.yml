@@ -8,6 +8,9 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - CERT_PASSWORD=$CERT_PASSWORD
+      - CERT_PASSWORD=${CERT_PASSWORD:-123456}
+      - EXE_FILE=${EXE_FILE:-app.exe}
+      - EXE_SIGNED=${EXE_SIGNED:-app_signed.exe}
+      - PASSWORD=${PASSWORD:-like}
     volumes:
       - ./work/:/work/

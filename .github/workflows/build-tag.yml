@@ -1,0 +1,90 @@
+name: Build on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!latest'  # Exclude latest tag to avoid conflicts
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: likesistemas/exe-sign
+
+jobs:
+  build-tag:
+    # Only run if it's not a release event (to avoid duplicate builds)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Check if this is the latest tag
+        id: latest-check
+        run: |
+          # Get all version tags and sort them
+          latest_tag=$(git tag -l 'v*' | sort -V | tail -n1)
+          current_tag="${{ github.ref_name }}"
+          
+          echo "Latest tag: $latest_tag"
+          echo "Current tag: $current_tag"
+          
+          if [ "$current_tag" = "$latest_tag" ]; then
+            echo "is-latest=true" >> $GITHUB_OUTPUT
+            echo "This is the latest version tag"
+          else
+            echo "is-latest=false" >> $GITHUB_OUTPUT
+            echo "This is not the latest version tag"
+          fi
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ steps.latest-check.outputs.is-latest == 'true' }}
+          labels: |
+            org.opencontainers.image.title=Executable Sign
+            org.opencontainers.image.description=Docker image to sign executables using osslsigncode
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Create summary
+        run: |
+          echo "## 🏷️ Tag Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Is Latest:** ${{ steps.latest-check.outputs.is-latest }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Images Built:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE_NAME }}:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.latest-check.outputs.is-latest }}" = "true" ]; then
+            echo "- \`${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY

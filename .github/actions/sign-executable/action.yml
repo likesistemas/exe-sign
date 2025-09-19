@@ -1,0 +1,97 @@
+name: 'Sign Executable with Code Signing Certificate'
+description: 'Signs Windows executables using osslsigncode and a code signing certificate'
+author: 'likesistemas'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  executable-path:
+    description: 'Path to the executable file to sign'
+    required: true
+  signed-executable-name:
+    description: 'Name for the signed executable'
+    required: false
+    default: 'signed-executable.exe'
+  certificate-base64:
+    description: 'Base64 encoded certificate (.pfx) file'
+    required: true
+  certificate-password:
+    description: 'Password for the certificate file'
+    required: true
+  signing-password:
+    description: 'Additional password for osslsigncode (optional)'
+    required: false
+    default: 'like'
+  timestamp-url:
+    description: 'Timestamp server URL'
+    required: false
+    default: 'http://timestamp.digicert.com'
+
+outputs:
+  signed-executable-path:
+    description: 'Path to the signed executable'
+    value: ${{ steps.sign.outputs.signed-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create work directory
+      shell: bash
+      run: mkdir -p ${{ github.workspace }}/signing-work
+
+    - name: Decode certificate
+      shell: bash
+      run: |
+        echo "${{ inputs.certificate-base64 }}" | base64 -d > ${{ github.workspace }}/signing-work/certificate.pfx
+        echo "Certificate decoded successfully"
+
+    - name: Verify executable exists
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.executable-path }}" ]; then
+          echo "ERROR: Executable file '${{ inputs.executable-path }}' not found"
+          exit 1
+        fi
+        echo "Executable file found: ${{ inputs.executable-path }}"
+
+    - name: Copy executable to work directory
+      shell: bash
+      run: |
+        cp "${{ inputs.executable-path }}" ${{ github.workspace }}/signing-work/app.exe
+        echo "Executable copied to work directory"
+
+    - name: Sign executable
+      id: sign
+      shell: bash
+      run: |
+        echo "Starting signing process..."
+        docker run --rm \
+          -v ${{ github.workspace }}/signing-work:/work \
+          -e CERT_PASSWORD="${{ inputs.certificate-password }}" \
+          -e EXE_FILE="app.exe" \
+          -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
+          -e PASSWORD="${{ inputs.signing-password }}" \
+          -e TIMESTAMP="${{ inputs.timestamp-url }}" \
+          likesistemas/exe-sign:latest
+        
+        # Set output
+        echo "signed-path=${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}" >> $GITHUB_OUTPUT
+        echo "Signing completed successfully"
+
+    - name: Verify signed executable
+      shell: bash
+      run: |
+        if [ ! -f "${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}" ]; then
+          echo "ERROR: Signed executable not found"
+          exit 1
+        fi
+        echo "Signed executable verified: ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}"
+        ls -la ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}
+
+    - name: Cleanup certificate
+      shell: bash
+      if: always()
+      run: |
+        rm -f ${{ github.workspace }}/signing-work/certificate.pfx
+        echo "Certificate file cleaned up"

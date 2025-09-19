@@ -1,0 +1,70 @@
+name: Sign Executable
+
+on:
+  workflow_call:
+    inputs:
+      executable-path:
+        description: 'Path to the executable file to sign'
+        required: true
+        type: string
+      signed-executable-name:
+        description: 'Name for the signed executable (optional)'
+        required: false
+        type: string
+        default: 'signed-executable.exe'
+      upload-artifact:
+        description: 'Upload signed executable as artifact'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      CERT_PASSWORD:
+        description: 'Certificate password'
+        required: true
+      CERT_BASE64:
+        description: 'Base64 encoded certificate file'
+        required: true
+      SIGNING_PASSWORD:
+        description: 'Additional signing password (optional)'
+        required: false
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create work directory
+        run: mkdir -p work
+
+      - name: Decode certificate
+        run: |
+          echo "${{ secrets.CERT_BASE64 }}" | base64 -d > work/certificate.pfx
+
+      - name: Copy executable to work directory
+        run: |
+          cp "${{ inputs.executable-path }}" work/app.exe
+
+      - name: Sign executable
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/work:/work \
+            -e CERT_PASSWORD="${{ secrets.CERT_PASSWORD }}" \
+            -e EXE_FILE="app.exe" \
+            -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
+            -e PASSWORD="${{ secrets.SIGNING_PASSWORD || 'like' }}" \
+            likesistemas/exe-sign:latest
+
+      - name: Upload signed executable
+        if: ${{ inputs.upload-artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-executable
+          path: work/${{ inputs.signed-executable-name }}
+          retention-days: 30
+
+      - name: Copy signed executable back
+        if: ${{ !inputs.upload-artifact }}
+        run: |
+          cp work/${{ inputs.signed-executable-name }} ${{ inputs.executable-path }}.signed
