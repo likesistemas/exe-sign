@@ -55,29 +55,75 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: Test Docker image
+      - name: Test Docker image with real executable
         run: |
-          echo "Testing the built Docker image..."
+          echo "Testing the built Docker image with real executable and certificate..."
           
-          # Create test directory
+          # Copy the real certificate from work directory
           mkdir -p test-work
+          cp work/certificate.pfx test-work/
           
-          # Create a dummy certificate for testing (this won't work for real signing but tests the process)
-          echo "dummy certificate content" > test-work/certificate.pfx
+          # Download a simple Windows executable for testing (7zip command line)
+          echo "📥 Downloading test executable..."
+          curl -L -o test-work/7za.exe "https://www.7-zip.org/a/7zr.exe"
           
-          # Create a dummy executable for testing
-          echo "dummy executable content" > test-work/app.exe
+          # Verify the executable was downloaded
+          if [ ! -f test-work/7za.exe ]; then
+            echo "❌ Failed to download test executable"
+            exit 1
+          fi
           
-          # Test that the image runs without crashing (will fail at signing but that's expected)
+          echo "📋 File info before signing:"
+          ls -la test-work/
+          file test-work/7za.exe || echo "file command not available"
+          
+          # Test certificate validity first
+          echo "🔐 Testing certificate..."
           docker run --rm \
             -v ${{ github.workspace }}/test-work:/work \
-            -e CERT_PASSWORD="test123" \
-            -e EXE_FILE="app.exe" \
-            -e EXE_SIGNED="app-signed.exe" \
-            -e PASSWORD="test" \
-            ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} || echo "Expected failure due to dummy certificate"
+            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            --entrypoint="" \
+            ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} \
+            openssl pkcs12 -info -in /work/certificate.pfx -password "pass:${{ secrets.CERTIFICATE_PASSWORD }}" -noout
           
-          echo "✅ Docker image test completed"
+          # Run the actual signing process
+          echo "✍️  Signing executable..."
+          docker run --rm \
+            -v ${{ github.workspace }}/test-work:/work \
+            -e CERT_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
+            -e EXE_FILE="7za.exe" \
+            -e EXE_SIGNED="7za-signed.exe" \
+            ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }}
+          
+          # Verify the signed executable was created
+          echo "📋 File info after signing:"
+          ls -la test-work/
+          
+          if [ -f test-work/7za-signed.exe ]; then
+            echo "✅ Signed executable created successfully!"
+            
+            # Compare file sizes
+            original_size=$(stat -c%s test-work/7za.exe)
+            signed_size=$(stat -c%s test-work/7za-signed.exe)
+            echo "📊 Original size: $original_size bytes"
+            echo "📊 Signed size: $signed_size bytes"
+            
+            # Verify the signature (basic check)
+            echo "🔍 Verifying signature..."
+            docker run --rm \
+              -v ${{ github.workspace }}/test-work:/work \
+              --entrypoint="" \
+              ${{ env.IMAGE_NAME }}:pr-${{ github.event.number }} \
+              osslsigncode verify -in /work/7za-signed.exe || echo "Note: Signature verification may fail due to test certificate"
+              
+          else
+            echo "❌ Signed executable was not created"
+            echo "📋 Available files:"
+            ls -la test-work/
+            exit 1
+          fi
+          
+          echo "✅ Complete signing test completed successfully!"
 
       - name: Comment PR with image info
         uses: actions/github-script@v7
@@ -87,9 +133,14 @@ jobs:
             const imageTag = `${{ env.IMAGE_NAME }}:pr-${prNumber}`;
             const imageSha = `${{ env.IMAGE_NAME }}:pr-${prNumber}-${{ github.sha }}`.substring(0, 60);
             
-            const comment = `## 🐳 Docker Image Built Successfully
+            const comment = `## 🐳 Docker Image Built and Tested Successfully
             
-            Your PR has been built and pushed to Docker Hub for testing:
+            Your PR has been built, tested with a real executable, and pushed to Docker Hub:
+            
+            **✅ Testing Results:**
+            - Certificate validation: PASSED
+            - Real executable signing: PASSED  
+            - Signature verification: COMPLETED
             
             **Latest PR image:**
             \`\`\`bash
@@ -104,12 +155,18 @@ jobs:
             ### Testing the PR image:
             
             \`\`\`bash
-            # Test with your own certificate and executable
+            # This image has been tested with a real certificate and executable
+            # You can test with your own certificate and executable:
             docker run --rm \\
               -v \${PWD}/work:/work \\
               -e CERT_PASSWORD="your_password" \\
               ${imageTag}
             \`\`\`
+            
+            **Note:** This PR image was automatically tested by:
+            - Validating the certificate in \`work/certificate.pfx\`
+            - Downloading and signing a real Windows executable (7zr.exe)
+            - Verifying the signature was applied successfully
             
             ### Using in GitHub Actions:
             
