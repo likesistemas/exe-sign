@@ -40,12 +40,6 @@ runs:
       shell: bash
       run: mkdir -p ${{ github.workspace }}/signing-work
 
-    - name: Decode certificate
-      shell: bash
-      run: |
-        echo "${{ inputs.certificate-base64 }}" | base64 -d > ${{ github.workspace }}/signing-work/certificate.pfx
-        echo "Certificate decoded successfully"
-
     - name: Verify executable exists
       shell: bash
       run: |
@@ -74,7 +68,7 @@ runs:
           -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
           -e PASSWORD="${{ inputs.signing-password }}" \
           -e TIMESTAMP="${{ inputs.timestamp-url }}" \
-          ricardoapaes/exe-sign:latest
+          ricardopaes/exe-sign:latest
         
         # Set output
         echo "signed-path=${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}" >> $GITHUB_OUTPUT
@@ -89,10 +83,3 @@ runs:
         fi
         echo "Signed executable verified: ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}"
         ls -la ${{ github.workspace }}/signing-work/${{ inputs.signed-executable-name }}
-
-    - name: Cleanup certificate
-      shell: bash
-      if: always()
-      run: |
-        rm -f ${{ github.workspace }}/signing-work/certificate.pfx
-        echo "Certificate file cleaned up"
