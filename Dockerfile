@@ -1,4 +1,4 @@
-FROM debian:10-slim as sign
+FROM debian:13-slim as sign
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

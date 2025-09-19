@@ -2,11 +2,52 @@
 
 Docker image to sign an executable using osslsigncode.
 
-```docker
-docker run -v ${PWD}/work/:/work/ likesistemas/exe-sign:latest
+## Quick Start
+
+1. Copy the `.env.example` file to `.env` and configure your certificate password:
+
+```bash
+cp .env.example .env
+# Edit the .env file and set CERT_PASSWORD with the correct password
 ```
 
-## Enviroment Variables
+2. Place your PFX certificate and executable file in the `work/` folder
+
+3. Run using docker-compose:
+
+```bash
+docker-compose run sign-exe
+```
+
+Or using docker directly:
+
+```bash
+docker run -v ${PWD}/work/:/work/ -e CERT_PASSWORD=your_password likesistemas/exe-sign:latest
+```
+
+## Troubleshooting
+
+### Error "Mac verify error: invalid password?"
+
+This error indicates that the PFX certificate password is incorrect. To resolve:
+
+1. Verify that the password is correct by testing the certificate:
+
+```bash
+openssl pkcs12 -info -in work/certificate.pfx -password pass:YOUR_PASSWORD -noout
+```
+
+2. Set the correct password in the `.env` file or in the `CERT_PASSWORD` environment variable
+
+### Error "no start line" or "Failed to read private key"
+
+These errors usually occur when:
+
+- The certificate password is incorrect
+- The PFX file is corrupted
+- The certificate format is not valid
+
+## Environment Variables
 
 CERT_FILE: Certificate file that should be in the /work/ folder. Default: certificate.pfx
 
