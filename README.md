@@ -106,6 +106,27 @@ jobs:
     signing-password: ${{ secrets.SIGNING_PASSWORD }} # optional
 ```
 
+### 🏷️ Version Management
+
+The action automatically uses the Docker image that matches the action version:
+
+- When you use `ricardoapaes/exe-sign@v1.2.0`, it will use the Docker image `ricardopaes/exe-sign:v1.2.0`
+- When you use `ricardoapaes/exe-sign@main`, it will use the Docker image `ricardopaes/exe-sign:latest`
+- This ensures consistency between the action version and the underlying Docker image
+
+**Recommended versioning:**
+
+```yaml
+# ✅ Use specific versions for production
+uses: ricardoapaes/exe-sign@v1.2.0
+
+# ✅ Use major version for automatic updates
+uses: ricardoapaes/exe-sign@v1
+
+# ⚠️ Use main/latest only for development
+uses: ricardoapaes/exe-sign@main
+```
+
 ### Using the Reusable Workflow
 
 ```yaml

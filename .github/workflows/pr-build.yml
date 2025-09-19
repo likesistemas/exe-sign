@@ -84,7 +84,7 @@ jobs:
             -e CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" \
             --entrypoint="" \
             ${{ env.IMAGE_NAME }}:latest \
-            sh -c 'apk add --no-cache openssl && echo "$CERTIFICATE_BASE64" | base64 -d | openssl pkcs12 -info -password "pass:$CERTIFICATE_PASSWORD" -noout'
+            sh -c 'echo "$CERTIFICATE_BASE64" | base64 -d | openssl pkcs12 -info -password "pass:$CERTIFICATE_PASSWORD" -noout'
           
           # Run the actual signing process
           echo "✍️  Signing executable..."
