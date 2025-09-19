@@ -3,14 +3,36 @@
 # Enable error handling
 set -e
 
-# Function to log messages
+# Color codes for terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to log messages with colors and emojis
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Function to log success messages
+log_success() {
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${GREEN}✅ $1${NC}"
+}
+
+# Function to log warning messages
+log_warning() {
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${YELLOW}⚠️  $1${NC}"
+}
+
+# Function to log info messages
+log_info() {
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${BLUE}ℹ️  $1${NC}"
 }
 
 # Function to handle errors
 error_exit() {
-    log "ERROR: $1"
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${RED}❌ ERROR: $1${NC}"
     exit 1
 }
 
@@ -26,10 +48,10 @@ if [ -n "${3}" ]; then
     PASSWORD=${3}
 fi
 
-log "Starting executable signing process..."
-log "Certificate file: ${CERT_FILE}"
-log "Executable file: ${EXE_FILE}"
-log "Output file: ${EXE_SIGNED}"
+log_info "🚀 Starting executable signing process..."
+log "📂 Certificate file: ${CERT_FILE}"
+log "🎯 Executable file: ${EXE_FILE}"
+log "📝 Output file: ${EXE_SIGNED}"
 
 if [ ! -f "${CERT_FILE}" ]; then
     error_exit "Certificate file '${CERT_FILE}' not found"
@@ -40,11 +62,11 @@ if [ ! -f "${EXE_FILE}" ]; then
 fi
 
 # Validate certificate password by testing the PFX file
-log "Validating certificate file and password..."
+log_info "🔐 Validating certificate file and password..."
 if ! openssl pkcs12 -info -in "${CERT_FILE}" -password "pass:${CERT_PASSWORD}" -noout 2>/dev/null; then
     error_exit "Invalid certificate file or incorrect password for ${CERT_FILE}"
 fi
-log "Certificate validation successful"
+log_success "Certificate validation successful"
 
 mkdir -p sign
 
@@ -53,7 +75,7 @@ CERT_PEM=sign/cert.pem
 RSA_KEY=sign/authenticode.key
 RSA_SPC=sign/authenticode.spc
 
-log "Extracting private key from certificate..."
+log_info "🔑 Extracting private key from certificate..."
 if ! openssl pkcs12 \
     -password "pass:${CERT_PASSWORD}" \
     -in "${CERT_FILE}" \
@@ -62,7 +84,7 @@ if ! openssl pkcs12 \
     error_exit "Failed to extract private key from certificate"
 fi
 
-log "Extracting certificate from PFX..."
+log_info "📜 Extracting certificate from PFX..."
 if ! openssl pkcs12 \
     -password "pass:${CERT_PASSWORD}" \
     -in "${CERT_FILE}" \
@@ -80,7 +102,7 @@ if [ ! -f "${CERT_PEM}" ] || [ ! -s "${CERT_PEM}" ]; then
     error_exit "Certificate extraction failed or file is empty"
 fi
 
-log "Converting private key to DER format..."
+log_info "🔄 Converting private key to DER format..."
 if ! openssl rsa \
     -in "${KEY_PEM}" \
     -outform DER \
@@ -88,7 +110,7 @@ if ! openssl rsa \
     error_exit "Failed to convert private key to DER format"
 fi
 
-log "Creating SPC file..."
+log_info "📦 Creating SPC file..."
 if ! openssl crl2pkcs7 -nocrl -certfile "${CERT_PEM}" \
     -outform DER \
     -out "${RSA_SPC}" 2>/dev/null; then
@@ -104,22 +126,22 @@ if [ ! -f "${RSA_SPC}" ] || [ ! -s "${RSA_SPC}" ]; then
     error_exit "SPC file creation failed or file is empty"
 fi
 
-log "Signing executable..."
+log_info "✍️  Signing executable..."
 if ! osslsigncode -spc "${RSA_SPC}" -key "${RSA_KEY}" \
     -pass "${PASSWORD}" -t "${TIMESTAMP}" \
     -in "${EXE_FILE}" -out "${EXE_SIGNED}"; then
     error_exit "Failed to sign executable"
 fi
 
-log "Verifying signed executable..."
+log_info "🔍 Verifying signed executable..."
 if osslsigncode verify "${EXE_SIGNED}"; then
-    log "Signature verification successful"
+    log_success "Signature verification successful"
 else
-    log "WARNING: Signature verification failed (this is normal for test/development certificates)"
-    log "The executable has been signed, but verification requires trusted CA certificates"
+    log_warning "Signature verification failed (this is normal for test/development certificates)"
+    log_info "The executable has been signed, but verification requires trusted CA certificates"
 fi
 
-log "Cleaning up temporary files..."
+log_info "🧹 Cleaning up temporary files..."
 rm -Rf sign/
 
-log "Executable signing completed successfully!"
+log_success "🎉 Executable signing completed successfully!"
