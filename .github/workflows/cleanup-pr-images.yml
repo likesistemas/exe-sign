@@ -167,10 +167,10 @@ jobs:
             
             ### Images to cleanup:
             
-            ${oldPrs.map(pr => `- \`ricardoapaes/exe-sign:pr-${pr.number}\` - ${pr.title}`).join('\n')}
+            ${oldPrs.map(pr => `- \`ricardopaes/exe-sign:pr-${pr.number}\` - ${pr.title}`).join('\n')}
             
             ### Manual cleanup steps:
-            1. Visit [Docker Hub Tags](https://hub.docker.com/r/ricardoapaes/exe-sign/tags)
+            1. Visit [Docker Hub Tags](https://hub.docker.com/r/ricardopaes/exe-sign/tags)
             2. Search for each \`pr-{number}\` pattern above
             3. Delete all matching tags
             

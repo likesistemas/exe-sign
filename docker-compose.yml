@@ -3,7 +3,7 @@ version: "3"
 services:
 
   sign-exe:
-    image: ricardoapaes/exe-sign:latest
+    image: ricardopaes/exe-sign:latest
     build:
       context: .
       dockerfile: Dockerfile
