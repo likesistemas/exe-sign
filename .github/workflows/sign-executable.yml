@@ -51,7 +51,7 @@ jobs:
             -e EXE_FILE="app.exe" \
             -e EXE_SIGNED="${{ inputs.signed-executable-name }}" \
             -e PASSWORD="${{ secrets.SIGNING_PASSWORD || 'like' }}" \
-            ricardoapaes/exe-sign:latest
+            ricardopaes/exe-sign:latest
 
       - name: Upload signed executable
         if: ${{ inputs.upload-artifact }}
